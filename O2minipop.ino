@@ -768,12 +768,12 @@ void loop() {
   uint8_t MUX = 4;
 
   // MIDI implementation / interaction
-  // If no MIDI signal is received act like original version
-  // If a MIDI beat signal was received once, adhere to MIDI beat clock transport, and use RUN trig for on/off
+  // Listen to MIDI beat clock if RUN - Stop input (D10) is set to off. Start, stop, continue, and clock signals are
+  // recognized. Behave like the original version if D10 is set to on.
   // 0x00 -> no MIDI
   // 0xfa -> MIDI play
   // 0xfc -> MIDI pause
-  // MIDI beat clock values
+  // MIDI beat clock values. There are six MIDI clock pulses for a 16th note (24ppq).
   // 0xf8 / 1111 1000 clock
   // 0xfa / 1111 1010 start
   // 0xfb / 1111 1011 continue
@@ -841,7 +841,7 @@ void loop() {
         if (!(tempocnt--)) {
           // Next step of tempocnt cycles
           tempocnt = tempo;
-          //digitalWriteFast(13, HIGH); //Clock out Hi
+          digitalWriteFast(13, HIGH); //Clock out Hi
           uint8_t trig = pgm_read_byte_near(pattern + (patselect << 4) + stepcnt++);
           PORTC = stepcnt;
           uint8_t mask = (PIND >> 2) | ((PINB & 3) << 6);
@@ -882,7 +882,7 @@ void loop() {
             samplecntGU = 2816;
           }
         }
-        //digitalWriteFast(13, LOW); //Clock out Lo
+        digitalWriteFast(13, LOW); //Clock out Lo
       }
     }
 
@@ -902,13 +902,13 @@ void loop() {
       switch (Serial.read()) {
         case 0xf8:
           // clock
-          digitalWriteFast(13, LOW); // MIDI beat LED
+          //digitalWriteFast(13, LOW); // MIDI beat LED
           if (!(pulsecnt--)) {
             tempocnt = 1;
             tempo = cyclecnt;
             cyclecnt = 0;
             pulsecnt = 5;
-            digitalWriteFast(13, HIGH); // MIDI beat LED
+            //digitalWriteFast(13, HIGH); // MIDI beat LED
           }
 
           midiStatus = midiStatus | 0xf0;
